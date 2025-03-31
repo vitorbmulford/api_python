@@ -8,44 +8,30 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     @staticmethod
     def get_connection():
+        """Estabelece conexão com o banco de dados"""
         try:
-            # String de conexão com encoding forçado
             conn = psycopg2.connect(
                 host=Config.DB_HOST,
                 dbname=Config.DB_NAME,
                 user=Config.DB_USER,
                 password=Config.DB_PASSWORD,
                 port=Config.DB_PORT,
-                options=f"-c client_encoding=LATIN1"  # Força LATIN1 na conexão
+                options="-c client_encoding=UTF8"
             )
-            conn.set_client_encoding('LATIN1')  # Configuração adicional
+            conn.autocommit = False
             return conn
         except Exception as e:
-            logger.error(f"Erro de conexão com encoding LATIN1: {str(e)}")
-            # Tentativa fallback com UTF-8
-            try:
-                conn = psycopg2.connect(
-                    host=Config.DB_HOST,
-                    dbname=Config.DB_NAME,
-                    user=Config.DB_USER,
-                    password=Config.DB_PASSWORD,
-                    port=Config.DB_PORT,
-                    options=f"-c client_encoding=UTF8"
-                )
-                conn.set_client_encoding('UTF8')
-                return conn
-            except Exception as fallback_error:
-                logger.critical(f"Erro na conexão fallback UTF-8: {str(fallback_error)}")
-                raise
+            logger.error(f"Erro de conexão: {str(e)}")
+            raise
 
     @staticmethod
-    def execute_query(query, params=None, fetch=True):
+    def execute_query(query, params=None, fetch=True, cursor_factory=extras.DictCursor):
+        """Executa uma query no banco de dados"""
         conn = None
         try:
             conn = DatabaseManager.get_connection()
-            with conn.cursor(cursor_factory=extras.DictCursor) as cur:
-                # Log da query que será executada
-                logger.debug(f"Executando query: {query}")
+            with conn.cursor(cursor_factory=cursor_factory) as cur:
+                logger.debug(f"Executando query: {query[:100]}...")  # Log parcial
                 logger.debug(f"Com parâmetros: {params}")
                 
                 cur.execute(query, params or ())
@@ -55,7 +41,7 @@ class DatabaseManager:
                     return result
                 conn.commit()
         except Exception as e:
-            logger.error(f"Erro detalhado: {str(e)}")
+            logger.error(f"Erro na query: {str(e)}")
             if conn:
                 conn.rollback()
             raise
