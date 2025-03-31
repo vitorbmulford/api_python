@@ -1,0 +1,16 @@
+# Dependências principais
+Flask==3.0.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.0
+pytz==2023.3.post1
+
+# Dependências para desenvolvimento e testes
+pytest==7.4.3
+pytest-cov==4.1.0
+requests==2.31.0
+Faker==19.6.2
+
+# Para possíveis extensões futuras
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+python-dateutil==2.8.2
